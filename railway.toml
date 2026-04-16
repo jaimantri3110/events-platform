@@ -6,7 +6,5 @@ dockerfilePath = "Dockerfile"
 # The web process runs migrations then starts gunicorn.
 # $PORT is injected by Railway at runtime.
 startCommand = "python manage.py migrate && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 120 --access-logfile -"
-healthcheckPath = "/api/v1/health/"
-healthcheckTimeout = 120
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
