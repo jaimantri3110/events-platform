@@ -21,13 +21,9 @@ COPY . .
 # A dummy SECRET_KEY is sufficient — collectstatic never touches the DB or crypto.
 RUN SECRET_KEY=build-time-placeholder python manage.py collectstatic --noinput
 
+RUN chmod +x entrypoint.sh
+
 EXPOSE 8000
 
-# Use shell form so $PORT (injected by Railway) is expanded at runtime.
-# Falls back to 8000 for local docker-compose runs.
-CMD python manage.py migrate && \
-    gunicorn config.wsgi:application \
-      --bind 0.0.0.0:${PORT:-8000} \
-      --workers 1 \
-      --timeout 120 \
-      --access-logfile -
+# exec form ensures gunicorn is PID 1 and receives signals correctly.
+ENTRYPOINT ["bash", "entrypoint.sh"]
