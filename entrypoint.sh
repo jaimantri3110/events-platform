@@ -1,5 +1,7 @@
 #!/bin/bash
 set -e
+# Merge stderr into stdout so Railway captures all output in one stream.
+exec 2>&1
 
 echo "==> PORT is: ${PORT:-8000}"
 echo "==> DJANGO_SETTINGS_MODULE is: $DJANGO_SETTINGS_MODULE"
