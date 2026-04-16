@@ -1,0 +1,15 @@
+.env
+.git
+.gitignore
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+htmlcov/
+.coverage
+*.log
+venv/
+.venv/

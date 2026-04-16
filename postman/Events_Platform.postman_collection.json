@@ -1,0 +1,307 @@
+{
+  "info": {
+    "name": "Events Platform API",
+    "description": "Complete API collection for the Events Platform backend. Covers auth, events, enrollments, and health endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api/v1", "type": "string" },
+    { "key": "access_token", "value": "", "type": "string" },
+    { "key": "refresh_token", "value": "", "type": "string" },
+    { "key": "event_id", "value": "1", "type": "string" },
+    { "key": "enrollment_id", "value": "1", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/signup/", "host": ["{{base_url}}"], "path": ["auth", "signup", ""] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"StrongPass123!\",\n  \"role\": \"seeker\"\n}"
+            },
+            "description": "Register a new user. Role must be 'seeker' or 'facilitator'. Do NOT include 'username' field."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/verify-email/", "host": ["{{base_url}}"], "path": ["auth", "verify-email", ""] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"otp\": \"123456\"\n}"
+            },
+            "description": "Verify email with the 6-digit OTP received in the console/email."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.collectionVariables.set('access_token', data.access);",
+                  "  pm.collectionVariables.set('refresh_token', data.refresh);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/login/", "host": ["{{base_url}}"], "path": ["auth", "login", ""] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"StrongPass123!\"\n}"
+            },
+            "description": "Login and get JWT tokens. Auto-sets access_token and refresh_token variables."
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.collectionVariables.set('access_token', data.access);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/refresh/", "host": ["{{base_url}}"], "path": ["auth", "refresh", ""] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "List Events (Search)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/events/?q=yoga&location=Mumbai&language=English&ordering=starts_at&page=1",
+              "host": ["{{base_url}}"],
+              "path": ["events", ""],
+              "query": [
+                { "key": "q", "value": "yoga", "description": "Text search on title/description" },
+                { "key": "location", "value": "Mumbai" },
+                { "key": "language", "value": "English" },
+                { "key": "ordering", "value": "starts_at" },
+                { "key": "page", "value": "1" }
+              ]
+            },
+            "description": "Seeker only. Supports: q, location, language, starts_after, starts_before, ordering, page."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const data = pm.response.json();",
+                  "  pm.collectionVariables.set('event_id', data.id.toString());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/events/", "host": ["{{base_url}}"], "path": ["events", ""] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Yoga Workshop\",\n  \"description\": \"A morning yoga workshop for beginners.\",\n  \"language\": \"English\",\n  \"location\": \"Mumbai\",\n  \"starts_at\": \"2026-06-01T09:00:00Z\",\n  \"ends_at\": \"2026-06-01T11:00:00Z\",\n  \"capacity\": 30\n}"
+            },
+            "description": "Facilitator only. starts_at must be in the future."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Event Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/events/{{event_id}}/", "host": ["{{base_url}}"], "path": ["events", "{{event_id}}", ""] }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Event (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/events/{{event_id}}/", "host": ["{{base_url}}"], "path": ["events", "{{event_id}}", ""] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Workshop Title\",\n  \"capacity\": 40\n}"
+            },
+            "description": "Facilitator owner only."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Event",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/events/{{event_id}}/", "host": ["{{base_url}}"], "path": ["events", "{{event_id}}", ""] },
+            "description": "Facilitator owner only. Returns 204."
+          },
+          "response": []
+        },
+        {
+          "name": "My Events",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/events/my-events/", "host": ["{{base_url}}"], "path": ["events", "my-events", ""] },
+            "description": "Facilitator only. Lists own events with enrolled_count and available_seats."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Enrollments",
+      "item": [
+        {
+          "name": "Enroll in Event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.id) pm.collectionVariables.set('enrollment_id', data.id.toString());"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/enrollments/", "host": ["{{base_url}}"], "path": ["enrollments", ""] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": {{event_id}}\n}"
+            },
+            "description": "Seeker only. Idempotent: 201 for new, 200 if already enrolled."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Enrollment",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/enrollments/{{enrollment_id}}/cancel/", "host": ["{{base_url}}"], "path": ["enrollments", "{{enrollment_id}}", "cancel", ""] },
+            "description": "Seeker owner only. Sets status to 'canceled'."
+          },
+          "response": []
+        },
+        {
+          "name": "Upcoming Enrollments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/enrollments/upcoming/", "host": ["{{base_url}}"], "path": ["enrollments", "upcoming", ""] },
+            "description": "Seeker only. Future events with status=enrolled."
+          },
+          "response": []
+        },
+        {
+          "name": "Enrollment History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/enrollments/history/", "host": ["{{base_url}}"], "path": ["enrollments", "history", ""] },
+            "description": "Seeker only. Past events (both enrolled and canceled)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/health/", "host": ["{{base_url}}"], "path": ["health", ""] },
+            "description": "Returns DB and Redis status. 200 = healthy, 503 = unhealthy."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Docs",
+      "item": [
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/docs/", "host": ["{{base_url}}"], "path": ["docs", ""] }
+          },
+          "response": []
+        },
+        {
+          "name": "ReDoc",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/redoc/", "host": ["{{base_url}}"], "path": ["redoc", ""] }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

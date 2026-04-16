@@ -1,0 +1,4 @@
+# Enforce Unix line endings for all text files.
+# This prevents CRLF in the Docker image which breaks shell scripts.
+* text=auto eol=lf
+*.bat text eol=crlf
